@@ -1,5 +1,3 @@
-import json
-import os
 import threading
 import requests
 from email.mime.multipart import MIMEMultipart
@@ -8,8 +6,7 @@ from email.mime.image import MIMEImage
 import smtplib
 
 run = True
-from azure_sql_server_actual import *
-from datetime import *
+from azure_sql_server import *
 
 new_dictionary = False
 global_flag_kill_thread = False
@@ -17,81 +14,36 @@ b = Database()
 config = {}
 config["TIME_BETWEEN_SENDS"] = 30
 dict_workers_without_mask = {}
+config["URL_CAMERAS"] = 'http://127.0.0.1:5000/'
+config["URL_ANALAYZER"] = 'http://127.0.0.1:5002/'
+TIME_TO_WAIT_TO_ANALAYZER = 10
 
 
 def convert_bytes_to_image(data):
     data = bytes(data.decode('utf8')[:-1], 'utf-8')
-    # nparr = np.fromstring(img_str, np.uint8)
     image_64_decode = base64.decodebytes(data)
     image_result = open('testfile.jpg', 'wb')
     image_result.write(image_64_decode)
     image_result.close()
     image = cv2.imread('testfile.jpg')
-    # cv2.imshow("Faces found", image)
-    # cv2.waitKey(0)
     return image
 
 
-# def get_images():
-#     import requests
-#     print("try to get images")
-#     response = requests.get('http://127.0.0.1:5000/')
-#     result = response.content
-#     data = json.loads(result)
-#     list_images = []
-#     for key in data:
-#         decoded_image_data = base64.decodebytes(bytes(data[key], encoding='utf8'))
-#         list_images.append(convert_bytes_to_image(decoded_image_data))
-#     return list_images
-
-
 def get_list_images_for_sending():
-    response = requests.get('http://127.0.0.1:5000/')
+    response = requests.get(config["URL_CAMERAS"])
     result = response.content
     return result
 
 
 def post_images_to_analayzer(images):
-    # images = json.dumps(images)
-    url = 'http://127.0.0.1:5002/'
-    x = requests.post(url, data={'images': images})
+    x = requests.post(config["URL_ANALAYZER"], data={'images': images})
     print("result of post to analayzer:   ", x)
     if (x.status_code != 200):
         return
 
 
-# counter = 0
-# size_n = 5
-#
-# # Get image, save local, return path.
-# def save_image(img):
-#     global counter
-#     if not os.path.exists('Images'):
-#         os.makedirs('Images')
-#     path_to_save = "Images/img%s.jpg" % str(counter)
-#     counter = (counter + 1) % size_n
-#     cv2.imwrite(path_to_save, img)
-#     return path_to_save
-#
-# def convert_image_to_varbinary(filename):
-#     image = open(filename, 'rb')
-#     image_read = image.read()
-#     image_64_encode = base64.encodebytes(image_read)
-#     image.close()
-#     return image_64_encode
-#
-#
-# def list_to_varbinary_list(list_images):
-#     list_binary = []
-#     for img in list_images:
-#         list_binary.append(convert_image_to_varbinary())
-#
-
-
 # Get image, save local, return path.
 def save_image(img):
-    # print("img:   ",img)
-
     if not os.path.exists('saved_pictures'):
         os.makedirs('saved_pictures')
     import time
@@ -129,22 +81,20 @@ def check_if_got_mail(id_worker):
     return False
 
 
-def sendMail(mailAddress, pathToImage, name):
+def send_mail(mail_address, path_to_image, name):
     server = smtplib.SMTP('smtp.gmail.com', 587)
     # start TLS for security
     server.starttls()
-    # Authentication
-    # s.login("keepyourhealthmask", "Mask1234")
     hi = ",Hi %s" % name
     text = ".Please keep your health and put your mask"
     sender_email = "keepyourhealthmask@gmail.com"
-    receiver_email = mailAddress
+    receiver_email = mail_address
     message = MIMEMultipart("alternative")
     message["Subject"] = "Keep your health"
     message["From"] = sender_email
     message["To"] = receiver_email
     # We assume that the image file is in the same directory that you run your Python script from
-    encoded = base64.b64encode(open(pathToImage, "rb").read()).decode()
+    encoded = base64.b64encode(open(path_to_image, "rb").read()).decode()
     html = f"""\
        <html>
         <body>
@@ -157,12 +107,11 @@ def sendMail(mailAddress, pathToImage, name):
         </body>
        </html>
        """
-    image = MIMEImage(open(pathToImage, "rb").read(), name=os.path.basename("picture"))
+    image = MIMEImage(open(path_to_image, "rb").read(), name=os.path.basename("picture"))
     part = MIMEText(html, "html")
     message.attach(part)
     message.attach(image)
-    # with smtplib.SMTP("smtp.mailtrap.io", 587) as server:
-    server.login("keepyourhealthmask", "Mask1234!")
+    server.login("keepyourhealthmask", "Amitai5925")
     server.sendmail(
         sender_email, receiver_email, message.as_string()
     )
@@ -170,7 +119,6 @@ def sendMail(mailAddress, pathToImage, name):
 
 
 def get_dict_images(response):
-    import requests
     result = response
     data = json.loads(result)
     dict_images = {}
@@ -188,7 +136,7 @@ def send_images_and_workers(dict_id_workers_without_mask):
             continue
         name, email = b.get_fullname_and_email_by_id(id)
         path_to_image = save_image(dict_id_workers_without_mask[id])
-        sendMail(email, path_to_image, name)
+        send_mail(email, path_to_image, name)
         # update got mail.
         b.insert_event(id)
         delete_image(path_to_image)
@@ -200,17 +148,15 @@ def data_to_send(list_images):
     data = {}
     for i in range(len(list_images)):
         key = 'img' + str(i)
-        # data[key] = base64.encodebytes(list_images[i]).decode('utf-8')
         data[key] = base64.encodebytes(list_images[i]).decode('utf-8')
-        # data[key] = list_images[i]
     result = json.dumps(data)
     return result
 
 
 from flask import (
     Flask,
-    render_template,
-    jsonify, Response, request, json)
+
+    json)
 
 # Create the application instance
 app = Flask(__name__, template_folder="templates")
@@ -226,16 +172,22 @@ def result():
         dict = data[key]
     print("get resquest, len dictionary: ", len(dict))
     dict_images = get_dict_images(dict)
-    # send_images_and_workers(dict_images)
     global dict_workers_without_mask
     dict_workers_without_mask = dict_images
     global new_dictionary
     new_dictionary = True
+    #############
+    send_images_and_workers(dict_workers_without_mask)
     return "OK"
 
 
 def start_server():
     app.run(port=5004, debug=True)
+
+
+def start_listen_to_analayzer():
+    from waitress import serve
+    serve(app, host="127.0.0.1", port=5004)
 
 
 def starter_manager():
@@ -257,16 +209,32 @@ def run_manager():
     post_images_to_analayzer(images)
 
 
-# starter_manager()
-
-
 def listen_to_analayzer():
     print("listen")
     from waitress import serve
     serve(app, host="127.0.0.1", port=5004)
 
 
-TIME_TO_WAIT_TO_ANALAYZER = 10
+def try_manager_iterate():
+    print("In try_manager_iterate")
+    # get list of images.
+    try:
+        images = get_list_images_for_sending()
+    except:
+        print("The cameras have to start")
+    global dict_workers_without_mask
+    global new_dictionary
+    dict_workers_without_mask = None
+    try:
+        post_images_to_analayzer(images)
+    except:
+        print("The analayzer have to start")
+    if new_dictionary:
+        print("length of dict: ", len(dict_workers_without_mask))
+        if len(dict_workers_without_mask) > 0:
+            print("sending")
+            send_images_and_workers(dict_workers_without_mask)
+    new_dictionary = False
 
 
 def manager():
@@ -297,6 +265,7 @@ def manager():
         if new_dictionary:
             print("length of dict: ", len(dict_workers_without_mask))
             if len(dict_workers_without_mask) > 0:
+                print("sending")
                 send_images_and_workers(dict_workers_without_mask)
         new_dictionary = False
 
@@ -317,7 +286,34 @@ def main():
             time.sleep(1)
 
 
+from flask import Flask, jsonify, request
+import json, os, signal
+
+
+@app.route('/stop_server', methods=['GET'])
+def stop_server():
+    print("stopppp")
+    os.kill(os.getpid(), signal.SIGINT)
+    print("get pid")
+    return jsonify({"success": True, "message": "Server is shutting down..."})
+
+
+def stop_service():
+    response = requests.get('http://127.0.0.1:5000/stop_server')
+    print(response)
+    import time
+    time.sleep(10)
+
+
+def try_connect_to_db():
+    b = Database()
+    print("try connect")
+    b.open_connection()
+    print("open_connection")
+    b.open_cursor()
+    print("open cursur")
+
+
 # If we're running in stand alone mode, run the application
 if __name__ == '__main__':
     main()
-
