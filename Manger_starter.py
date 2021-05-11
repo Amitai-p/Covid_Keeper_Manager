@@ -32,4 +32,5 @@ def main():
 
 
 if __name__ == '__main__':
+    # Manager.try_connect_to_db()
     main()
