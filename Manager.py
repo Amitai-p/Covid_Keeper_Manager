@@ -11,12 +11,21 @@ from azure_sql_server import *
 new_dictionary = False
 global_flag_kill_thread = False
 b = Database()
-config = {}
-config["TIME_BETWEEN_SENDS"] = 30
+
 dict_workers_without_mask = {}
-config["URL_CAMERAS"] = 'http://127.0.0.1:5000/'
-config["URL_ANALAYZER"] = 'http://127.0.0.1:5002/'
 TIME_TO_WAIT_TO_ANALAYZER = 10
+
+
+def init_config():
+    config = {}
+    config["TIME_BETWEEN_SENDS"] = 30
+    config["URL_CAMERAS"] = 'http://127.0.0.1:5000/'
+    config["URL_ANALAYZER"] = 'http://127.0.0.1:5002/'
+    config["USER_NAME_EMAIL"] = 'keepyourhealthmask'
+    config["PASSWORD_EMAIL"] = 'Amitai5925'
+
+
+config = init_config()
 
 
 def convert_bytes_to_image(data):
@@ -111,7 +120,7 @@ def send_mail(mail_address, path_to_image, name):
     part = MIMEText(html, "html")
     message.attach(part)
     message.attach(image)
-    server.login("keepyourhealthmask", "Amitai5925")
+    server.login(config["USER_NAME_EMAIL"], config["PASSWORD_EMAIL"])
     server.sendmail(
         sender_email, receiver_email, message.as_string()
     )
@@ -190,23 +199,23 @@ def start_listen_to_analayzer():
     serve(app, host="127.0.0.1", port=5004)
 
 
-def starter_manager():
-    x = threading.Thread(target=run_manager)
-    x.start()
-    from waitress import serve
-    serve(app, host="127.0.0.1", port=5004)
-    # app.run(port=5004, debug=True)
+# def starter_manager():
+#     x = threading.Thread(target=run_manager)
+#     x.start()
+#     from waitress import serve
+#     serve(app, host="127.0.0.1", port=5004)
+#     # app.run(port=5004, debug=True)
 
-
-def run_manager():
-    import time
-    print("run")
-    images = get_list_images_for_sending()
-    # In case that there is no images.
-    while images == b'{}':
-        time.sleep(1)
-        images = get_list_images_for_sending()
-    post_images_to_analayzer(images)
+#
+# def run_manager():
+#     import time
+#     print("run")
+#     images = get_list_images_for_sending()
+#     # In case that there is no images.
+#     while images == b'{}':
+#         time.sleep(1)
+#         images = get_list_images_for_sending()
+#     post_images_to_analayzer(images)
 
 
 def listen_to_analayzer():
@@ -270,39 +279,41 @@ def manager():
         new_dictionary = False
 
 
-def starter_manager():
-    x = threading.Thread(target=listen_to_analayzer)
-    x.start()
-    manager()
+#
+# def starter_manager():
+#     x = threading.Thread(target=listen_to_analayzer)
+#     x.start()
+#     manager()
 
 
-def main():
-    while True:
-        try:
-            starter_manager()
-        except:
-            print("Problem with starter")
-            import time
-            time.sleep(1)
+# def main():
+#     while True:
+#         try:
+#             starter_manager()
+#         except:
+#             print("Problem with starter")
+#             import time
+#             time.sleep(1)
 
 
 from flask import Flask, jsonify, request
 import json, os, signal
 
 
-@app.route('/stop_server', methods=['GET'])
-def stop_server():
-    print("stopppp")
-    os.kill(os.getpid(), signal.SIGINT)
-    print("get pid")
-    return jsonify({"success": True, "message": "Server is shutting down..."})
-
-
-def stop_service():
-    response = requests.get('http://127.0.0.1:5000/stop_server')
-    print(response)
-    import time
-    time.sleep(10)
+# #
+# @app.route('/stop_server', methods=['GET'])
+# def stop_server():
+#     print("stopppp")
+#     os.kill(os.getpid(), signal.SIGINT)
+#     print("get pid")
+#     return jsonify({"success": True, "message": "Server is shutting down..."})
+#
+#
+# def stop_service():
+#     response = requests.get('http://127.0.0.1:5000/stop_server')
+#     print(response)
+#     import time
+#     time.sleep(10)
 
 
 def try_connect_to_db():
@@ -313,7 +324,6 @@ def try_connect_to_db():
     b.open_cursor()
     print("open cursur")
 
-
 # If we're running in stand alone mode, run the application
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
