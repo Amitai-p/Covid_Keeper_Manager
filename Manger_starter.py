@@ -13,11 +13,12 @@ def main():
         if int(flag) == 0:
             start_new_round = True
             import time
-            time.sleep(5)
+            time.sleep(Manager.config["TIME_TO_SLEEP"])
             continue
+        # In case of new round, wait that the cameras will take new pictures.
         if start_new_round:
             import time
-            time.sleep(5)
+            time.sleep(Manager.config["TIME_TO_SLEEP"])
             start_new_round = False
         # print("iter")
         # if counter >= 5:

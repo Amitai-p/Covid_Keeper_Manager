@@ -23,6 +23,7 @@ def init_config():
     config["URL_ANALAYZER"] = 'http://127.0.0.1:5002/'
     config["USER_NAME_EMAIL"] = 'keepyourhealthmask'
     config["PASSWORD_EMAIL"] = 'Amitai5925'
+    config["TIME_TO_SLEEP"] = 5
     return config
 
 
