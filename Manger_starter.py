@@ -8,11 +8,13 @@ def main():
     start_new_round = True
     # counter = 0
     while True:
-        # if flag == 0:
-        #     start_new_round = True
-        #     import time
-        #     time.sleep(5)
-        #     continue
+        flag = Manager.b.start_or_close_threads()
+        print(flag)
+        if int(flag) == 0:
+            start_new_round = True
+            import time
+            time.sleep(5)
+            continue
         if start_new_round:
             import time
             time.sleep(5)
@@ -32,5 +34,6 @@ def main():
 
 
 if __name__ == '__main__':
+    # print(Manager.config)
     # Manager.try_connect_to_db()
     main()

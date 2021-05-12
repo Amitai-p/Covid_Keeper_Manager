@@ -14,7 +14,7 @@ b = Database()
 
 dict_workers_without_mask = {}
 TIME_TO_WAIT_TO_ANALAYZER = 10
-
+global config
 
 def init_config():
     config = {}
@@ -23,9 +23,11 @@ def init_config():
     config["URL_ANALAYZER"] = 'http://127.0.0.1:5002/'
     config["USER_NAME_EMAIL"] = 'keepyourhealthmask'
     config["PASSWORD_EMAIL"] = 'Amitai5925'
+    return config
 
 
 config = init_config()
+
 
 
 def convert_bytes_to_image(data):
@@ -225,7 +227,6 @@ def listen_to_analayzer():
 
 
 def try_manager_iterate():
-    print("In try_manager_iterate")
     # get list of images.
     try:
         images = get_list_images_for_sending()
@@ -317,13 +318,21 @@ import json, os, signal
 
 
 def try_connect_to_db():
-    b = Database()
+    # b = Database()
     print("try connect")
     b.open_connection()
     print("open_connection")
     b.open_cursor()
     print("open cursur")
+    # print(b.get_workers_to_images_dict())
+    result = b.start_or_close_threads()
+    print(result)
+    a = 1
+
+def run_manager_with_flag():
+    print(b)
 
 # If we're running in stand alone mode, run the application
 # if __name__ == '__main__':
-#     main()
+#     try_connect_to_db()
+    # main()

@@ -63,6 +63,25 @@ class Database:
     #     self.crsr.commit()
     #     self.close_cursor()
 
+    def start_or_close_threads(self):
+        result = self.select_query_of_one_row("select Handle from [dbo].[Starter]")
+        if not result:
+            return None
+        return result[0]
+
+    def update_query(self, query):
+        self.open_connection()
+        self.open_cursor()
+        self.crsr.execute(query)
+        self.crsr.commit()
+        self.close_cursor()
+
+    def change_handle_value(self, value):
+        if value == 0:
+            self.update_query("update [dbo].[Starter] set Handle = 0")
+        elif value == 1:
+            self.update_query("update [dbo].[Starter] set Handle = 1")
+
     def fetch_photo(self, user_id: str) -> bytes:
         blob_client = BlobClient.from_connection_string(conn_str=self._CONNECTION_STRING, container_name=self.
                                                         _CONTAINER, blob_name=self._generate_blob_name(user_id))
