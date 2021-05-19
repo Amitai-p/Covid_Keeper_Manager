@@ -11,8 +11,10 @@ from azure_sql_server import *
 new_dictionary = False
 global_flag_kill_thread = False
 NAME_COMPONENT = 'Manager'
+PORT_COMPONENT = '5004'
 b = Database()
 b.set_ip_by_table_name(NAME_COMPONENT)
+b.set_port_by_table_name(NAME_COMPONENT, PORT_COMPONENT)
 
 dict_workers_without_mask = {}
 TIME_TO_WAIT_TO_ANALAYZER = 10
@@ -124,7 +126,7 @@ def check_if_got_mail(id_worker):
         return True
     diff_seconds = compare_times(time_last)
     print("diff seconds: ", diff_seconds)
-    MINUTES_TO_SECONDES = 1
+    MINUTES_TO_SECONDES = 0.25
     if (diff_seconds > config["Minutes_between_mails"] * MINUTES_TO_SECONDES):
         return True
     return False
