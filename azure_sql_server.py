@@ -156,6 +156,57 @@ class Database:
             return None
         return result[0]
 
+    def get_manager_config_flag(self):
+        result = self.select_query_of_one_row("select Handle from [dbo].[Manager_Config]")
+        if not result:
+            return None
+        return result[0]
+
+    def get_manager_config_dict(self):
+        result = self.select_query_of_one_row("select Minutes_between_mails from [dbo].[Manager_Config]")
+        if not result:
+            return None
+        self.set_manager_config_flag()
+        config_dict = {"Minutes_between_mails": result[0]}
+        return config_dict
+
+    def set_manager_config_flag(self):
+        self.update_query("update [dbo].[Manager_Config] set Handle = 0")
+
+    def set_manager_config_flag_to_1(self):
+        self.update_query("update [dbo].[Manager_Config] set Handle = 1")
+
+    def get_ip_port_config(self, table_name):
+        result = self.select_query_of_one_row("select Manager_port, Manager_ip, Analayzer_port, Analayzer_ip, "
+                                              "Camera_port, Camera_ip from [dbo].[Ip_port_components]")
+        if not result:
+            return None
+        self.update_query("update [dbo].[Ip_port_components] set " + table_name + "_handle = 0")
+        config_dict = {"Manager_port": result[0],
+                       "Manager_ip": result[1],
+                       "Analayzer_port": result[2],
+                       "Analayzer_ip": result[3],
+                       "Camera_port": result[4],
+                       "Camera_ip": result[5]}
+        return config_dict
+
+    def set_ip_by_table_name(self, table_name):
+        import socket
+        my_ip = socket.gethostbyname(socket.gethostname())
+        self.update_query("update [dbo].[Ip_port_components] set " + table_name + "_ip = '" + my_ip + "'")
+        self.turn_on_components_ip_port_flags()
+
+    def turn_on_components_ip_port_flags(self):
+        self.update_query("update [dbo].[Ip_port_components] set Manager_handle = 1, "
+                          "Analayzer_handle = 1, Camera_handle = 1")
+
+    def get_flag_ip_port_by_table_name(self, table_name):
+        result = self.select_query_of_one_row("select " + table_name + "_handle "
+                                                                       "from [dbo].[Ip_port_components]")
+        if not result:
+            return None
+        return result[0]
+
     def select_query_of_one_row(self, query):
         self.open_connection()
         self.open_cursor()
@@ -181,20 +232,3 @@ class Database:
         self.crsr.execute(insert_sql, values_list)
         self.crsr.commit()
         self.close_cursor()
-
-# b = Database()
-# print(b.get_events_order_with_max_time())
-# print(b.get_max_time_of_event_by_id_worker('2'))
-# b.insert_event('2')
-# data1, m = b.get_fullname_and_email_by_id('1')
-# print(data1)
-# print(m)
-# print(b.get_workers_to_images_dict())
-# b.insert_worker()
-# b.get_image_worker('4')
-# select_sql = "SELECT * From [SalesLT].[Address]"
-# results = crsr.execute(select_sql)
-# print(crsr.fetchall())
-
-
-# cnxn.close()

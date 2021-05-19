@@ -10,25 +10,61 @@ from azure_sql_server import *
 
 new_dictionary = False
 global_flag_kill_thread = False
+NAME_COMPONENT = 'Manager'
 b = Database()
+b.set_ip_by_table_name(NAME_COMPONENT)
 
 dict_workers_without_mask = {}
 TIME_TO_WAIT_TO_ANALAYZER = 10
 global config
 
+
+def get_url_by_name(config, name_comp):
+    url = 'http://' + config[name_comp + '_ip'] + ':' + config[name_comp + '_port'] + '/'
+    return url
+
+
+def update_config_ip_port(config):
+    dict = b.get_ip_port_config(NAME_COMPONENT)
+    for conf in dict:
+        config[conf] = dict[conf]
+    config["URL_CAMERAS"] = get_url_by_name(config, 'Camera')
+    config["URL_ANALAYZER"] = get_url_by_name(config, 'Analayzer')
+    return config
+
+
 def init_config():
     config = {}
-    config["TIME_BETWEEN_SENDS"] = 30
-    config["URL_CAMERAS"] = 'http://127.0.0.1:5000/'
-    config["URL_ANALAYZER"] = 'http://127.0.0.1:5002/'
+    config = update_config_ip_port(config)
+    config["Minutes_between_mails"] = 30
+    config["URL_CAMERAS"] = get_url_by_name(config, 'Camera')
+    config["URL_ANALAYZER"] = get_url_by_name(config, 'Analayzer')
     config["USER_NAME_EMAIL"] = 'keepyourhealthmask'
     config["PASSWORD_EMAIL"] = 'Amitai5925'
     config["TIME_TO_SLEEP"] = 5
+
     return config
 
 
 config = init_config()
+print(config)
 
+
+def update_config():
+    print(config)
+    dict = b.get_manager_config_dict()
+    print(dict)
+    for conf in dict:
+        config[conf] = dict[conf]
+    print(config)
+
+
+def check_config():
+    print("flag config: ", b.get_manager_config_flag())
+    if b.get_manager_config_flag() == '1':
+        update_config()
+        # update_flag_read_config()
+        print("flag config: ", b.get_manager_config_flag())
 
 
 def convert_bytes_to_image(data):
@@ -88,7 +124,8 @@ def check_if_got_mail(id_worker):
         return True
     diff_seconds = compare_times(time_last)
     print("diff seconds: ", diff_seconds)
-    if (diff_seconds > config["TIME_BETWEEN_SENDS"]):
+    MINUTES_TO_SECONDES = 1
+    if (diff_seconds > config["Minutes_between_mails"] * MINUTES_TO_SECONDES):
         return True
     return False
 
@@ -193,38 +230,16 @@ def result():
     return "OK"
 
 
-def start_server():
-    app.run(port=5004, debug=True)
-
-
 def start_listen_to_analayzer():
     from waitress import serve
-    serve(app, host="127.0.0.1", port=5004)
+    serve(app, host=config[NAME_COMPONENT + '_ip'], port=int(config[NAME_COMPONENT + '_port']))
 
 
-# def starter_manager():
-#     x = threading.Thread(target=run_manager)
-#     x.start()
-#     from waitress import serve
-#     serve(app, host="127.0.0.1", port=5004)
-#     # app.run(port=5004, debug=True)
-
-#
-# def run_manager():
-#     import time
-#     print("run")
-#     images = get_list_images_for_sending()
-#     # In case that there is no images.
-#     while images == b'{}':
-#         time.sleep(1)
-#         images = get_list_images_for_sending()
-#     post_images_to_analayzer(images)
-
-
-def listen_to_analayzer():
-    print("listen")
-    from waitress import serve
-    serve(app, host="127.0.0.1", port=5004)
+def check_config_ip_port():
+    if b.get_flag_ip_port_by_table_name(NAME_COMPONENT) == '1':
+        update_config_ip_port(config)
+        print("after update:")
+        print(config)
 
 
 def try_manager_iterate():
@@ -330,10 +345,11 @@ def try_connect_to_db():
     print(result)
     a = 1
 
+
 def run_manager_with_flag():
     print(b)
 
 # If we're running in stand alone mode, run the application
 # if __name__ == '__main__':
 #     try_connect_to_db()
-    # main()
+# main()
