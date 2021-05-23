@@ -44,7 +44,6 @@ def init_config():
     config["USER_NAME_EMAIL"] = 'keepyourhealthmask'
     config["PASSWORD_EMAIL"] = 'Amitai5925'
     config["TIME_TO_SLEEP"] = 5
-
     return config
 
 
@@ -156,7 +155,7 @@ def send_mail(mail_address, path_to_image, name):
            <p style="text-align:left;"> {text} </p>
            <br />
            <p style="text-align:left;"> ,Thanks  </p>
-           <p style="text-align:left;"> Amitai  </p>
+           <p style="text-align:left;"> Covid keeper team  </p>
         </body>
        </html>
        """
