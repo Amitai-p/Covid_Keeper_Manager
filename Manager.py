@@ -188,7 +188,10 @@ def send_images_and_workers(dict_id_workers_without_mask):
             continue
         name, email = b.get_fullname_and_email_by_id(id)
         path_to_image = save_image(dict_id_workers_without_mask[id])
-        send_mail(email, path_to_image, name)
+        try:
+            send_mail(email, path_to_image, name)
+        except:
+            print('Can\'t send mail')
         # update got mail.
         b.insert_event(id)
         delete_image(path_to_image)
