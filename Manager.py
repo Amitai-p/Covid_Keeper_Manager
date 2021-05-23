@@ -80,7 +80,9 @@ def convert_bytes_to_image(data):
 
 
 def get_list_images_for_sending():
-    response = requests.get(config["URL_CAMERAS"])
+    headers = {'authentication': config['PASSWORD_EMAIL']}
+    response = requests.get(config["URL_CAMERAS"], headers=headers)
+    print(response)
     result = response.content
     return result
 
