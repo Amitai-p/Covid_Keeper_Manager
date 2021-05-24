@@ -86,7 +86,22 @@ def get_list_images_for_sending():
     return result
 
 
+def load_key():
+    """
+    Loads the key named `secret.key` from the current directory.
+    """
+    return open("secret.key", "rb").read()
+
+
+def decrypt_images(images):
+    from cryptography.fernet import Fernet
+    key = load_key()
+    f = Fernet(key)
+    return f.decrypt(images)
+
+
 def post_images_to_analayzer(images):
+    images = decrypt_images(images)
     x = requests.post(config["URL_ANALAYZER"], data={'images': images})
     print("result of post to analayzer:   ", x)
     if (x.status_code != 200):
@@ -210,7 +225,6 @@ def data_to_send(list_images):
 
 from flask import (
     Flask,
-
     json)
 
 # Create the application instance
@@ -269,37 +283,38 @@ def try_manager_iterate():
     new_dictionary = False
 
 
-def manager():
-    while True:
-        print("run")
-        # get list of images.
-        images = get_list_images_for_sending()
-        # In case of that there is no images. wait for the next time.
-        while images == b'{}':
-            import time
-            time.sleep(1)
-            images = get_list_images_for_sending()
-        global dict_workers_without_mask
-        global new_dictionary
-        dict_workers_without_mask = None
-        # Sending the images to the analayzer.
-        post_images_to_analayzer(images)
-        import time
-        # Check the time of sending.
-        time_before_send_to_analayzer = time.time()
-        while not new_dictionary:
-            import time
-            time.sleep(0.5)
-            # In case of problem with the analayzer.
-            if (time.time() - time_before_send_to_analayzer > TIME_TO_WAIT_TO_ANALAYZER):
-                break
-        print("get data from post")
-        if new_dictionary:
-            print("length of dict: ", len(dict_workers_without_mask))
-            if len(dict_workers_without_mask) > 0:
-                print("sending")
-                send_images_and_workers(dict_workers_without_mask)
-        new_dictionary = False
+#
+# def manager():
+#     while True:
+#         print("run")
+#         # get list of images.
+#         images = get_list_images_for_sending()
+#         # In case of that there is no images. wait for the next time.
+#         while images == b'{}':
+#             import time
+#             time.sleep(1)
+#             images = get_list_images_for_sending()
+#         global dict_workers_without_mask
+#         global new_dictionary
+#         dict_workers_without_mask = None
+#         # Sending the images to the analayzer.
+#         post_images_to_analayzer(images)
+#         import time
+#         # Check the time of sending.
+#         time_before_send_to_analayzer = time.time()
+#         while not new_dictionary:
+#             import time
+#             time.sleep(0.5)
+#             # In case of problem with the analayzer.
+#             if (time.time() - time_before_send_to_analayzer > TIME_TO_WAIT_TO_ANALAYZER):
+#                 break
+#         print("get data from post")
+#         if new_dictionary:
+#             print("length of dict: ", len(dict_workers_without_mask))
+#             if len(dict_workers_without_mask) > 0:
+#                 print("sending")
+#                 send_images_and_workers(dict_workers_without_mask)
+#         new_dictionary = False
 
 
 #
