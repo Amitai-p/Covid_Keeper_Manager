@@ -1,10 +1,9 @@
-import threading
 import requests
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+from datetime import *
 import smtplib
-import json
 
 run = True
 from azure_sql_server import *
@@ -24,7 +23,6 @@ global config
 
 def get_url_by_name(config, name_comp):
     url = 'http://' + config[name_comp + '_ip'] + ':' + config[name_comp + '_port'] + '/'
-    print(url)
     return url
 
 
@@ -56,13 +54,14 @@ def init_config_from_file():
     return config
 
 
-# config = init_config()
-# print(config)
 # Insert the config into json file.
 def inset_dict_json(path_to_file, config):
     config_json = json.dumps(config)
     with open(path_to_file, 'w') as json_file:
         json.dump(config_json, json_file)
+
+
+import json
 
 
 # Read the json file of the config.
@@ -76,7 +75,6 @@ def read_json(path_to_file):
 
 
 config = init_config_from_file()
-print(config)
 
 
 def update_config():
@@ -92,8 +90,6 @@ def check_config():
     print("flag config: ", b.get_manager_config_flag())
     if b.get_manager_config_flag() == '1':
         update_config()
-        # update_flag_read_config()
-        print("flag config: ", b.get_manager_config_flag())
 
 
 def convert_bytes_to_image(data):
@@ -274,8 +270,6 @@ def result():
     dict_workers_without_mask = dict_images
     global new_dictionary
     new_dictionary = True
-    #############
-    send_images_and_workers(dict_workers_without_mask)
     return "OK"
 
 
@@ -287,15 +281,11 @@ def start_listen_to_analayzer():
 def check_config_ip_port():
     if b.get_flag_ip_port_by_table_name(NAME_COMPONENT) == '1':
         update_config_ip_port(config)
-        print("after update:")
-        print(config)
 
 
 def try_manager_iterate():
     # get list of images.
     try:
-
-        # images = get_list_images_for_sending()
         b.set_camera_config_flag_from_manager()
         flag = int(b.get_camera_config_flag())
         while flag == 1:
@@ -303,7 +293,7 @@ def try_manager_iterate():
             time.sleep(1)
             flag = int(b.get_camera_config_flag())
         images = b.get_images_txt_from_storage()
-        print('images: ', images)
+        print('length images: ', len(images))
     except:
         print("The cameras have to start")
     global dict_workers_without_mask
@@ -321,75 +311,8 @@ def try_manager_iterate():
     new_dictionary = False
 
 
-#
-# def manager():
-#     while True:
-#         print("run")
-#         # get list of images.
-#         images = get_list_images_for_sending()
-#         # In case of that there is no images. wait for the next time.
-#         while images == b'{}':
-#             import time
-#             time.sleep(1)
-#             images = get_list_images_for_sending()
-#         global dict_workers_without_mask
-#         global new_dictionary
-#         dict_workers_without_mask = None
-#         # Sending the images to the analayzer.
-#         post_images_to_analayzer(images)
-#         import time
-#         # Check the time of sending.
-#         time_before_send_to_analayzer = time.time()
-#         while not new_dictionary:
-#             import time
-#             time.sleep(0.5)
-#             # In case of problem with the analayzer.
-#             if (time.time() - time_before_send_to_analayzer > TIME_TO_WAIT_TO_ANALAYZER):
-#                 break
-#         print("get data from post")
-#         if new_dictionary:
-#             print("length of dict: ", len(dict_workers_without_mask))
-#             if len(dict_workers_without_mask) > 0:
-#                 print("sending")
-#                 send_images_and_workers(dict_workers_without_mask)
-#         new_dictionary = False
-
-
-#
-# def starter_manager():
-#     x = threading.Thread(target=listen_to_analayzer)
-#     x.start()
-#     manager()
-
-
-# def main():
-#     while True:
-#         try:
-#             starter_manager()
-#         except:
-#             print("Problem with starter")
-#             import time
-#             time.sleep(1)
-
-
-from flask import Flask, jsonify, request
-import json, os, signal
-
-
-# #
-# @app.route('/stop_server', methods=['GET'])
-# def stop_server():
-#     print("stopppp")
-#     os.kill(os.getpid(), signal.SIGINT)
-#     print("get pid")
-#     return jsonify({"success": True, "message": "Server is shutting down..."})
-#
-#
-# def stop_service():
-#     response = requests.get('http://127.0.0.1:5000/stop_server')
-#     print(response)
-#     import time
-#     time.sleep(10)
+from flask import request
+import json, os
 
 
 def try_connect_to_db():
@@ -407,8 +330,3 @@ def try_connect_to_db():
 
 def run_manager_with_flag():
     print(b)
-
-# If we're running in stand alone mode, run the application
-# if __name__ == '__main__':
-#     try_connect_to_db()
-# main()

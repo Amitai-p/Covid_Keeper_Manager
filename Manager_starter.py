@@ -27,6 +27,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # print(Manager.config)
-    # Manager.try_connect_to_db()
     main()
