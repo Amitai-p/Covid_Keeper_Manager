@@ -24,6 +24,7 @@ global config
 
 def get_url_by_name(config, name_comp):
     url = 'http://' + config[name_comp + '_ip'] + ':' + config[name_comp + '_port'] + '/'
+    print(url)
     return url
 
 
@@ -46,6 +47,7 @@ def init_config():
     config["PASSWORD_EMAIL"] = 'Amitai5925'
     config["TIME_TO_SLEEP"] = 5
     return config
+
 
 def init_config_from_file():
     PATH_TO_CONFIG = 'config_json.txt'
@@ -75,6 +77,7 @@ def read_json(path_to_file):
 
 config = init_config_from_file()
 print(config)
+
 
 def update_config():
     print(config)
@@ -127,6 +130,7 @@ def decrypt_images(images):
 
 def post_images_to_analayzer(images):
     images = decrypt_images(images)
+    print(config["URL_ANALAYZER"])
     x = requests.post(config["URL_ANALAYZER"], data={'images': images})
     print("result of post to analayzer:   ", x)
     if (x.status_code != 200):
@@ -277,7 +281,7 @@ def result():
 
 def start_listen_to_analayzer():
     from waitress import serve
-    serve(app, host=config[NAME_COMPONENT + '_ip'], port=int(config[NAME_COMPONENT + '_port']))
+    serve(app, host='127.0.0.1', port=int(config[NAME_COMPONENT + '_port']))
 
 
 def check_config_ip_port():
@@ -290,7 +294,16 @@ def check_config_ip_port():
 def try_manager_iterate():
     # get list of images.
     try:
-        images = get_list_images_for_sending()
+
+        # images = get_list_images_for_sending()
+        b.set_camera_config_flag_from_manager()
+        flag = int(b.get_camera_config_flag())
+        while flag == 1:
+            import time
+            time.sleep(1)
+            flag = int(b.get_camera_config_flag())
+        images = b.get_images_txt_from_storage()
+        print('images: ', images)
     except:
         print("The cameras have to start")
     global dict_workers_without_mask

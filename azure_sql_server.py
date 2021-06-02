@@ -18,7 +18,7 @@ class Database:
                          '/l4iKb4iM/DSNcAeezmYYxxFxw==;' \
                          'EndpointSuffix=core.windows.net'
     _CONTAINER = 'pictures'
-
+    _IMAGES_FILE_NAME = 'list_images.txt'
     def open_connection(self):
         if not Database.is_connection:
             driver = '{ODBC Driver 17 for SQL Server}'
@@ -192,7 +192,8 @@ class Database:
 
     def set_ip_by_table_name(self, table_name):
         import socket
-        my_ip = socket.gethostbyname(socket.gethostname())
+        # my_ip = socket.gethostbyname(socket.gethostname())
+        my_ip = '127.0.0.1'
         self.update_query("update [dbo].[Ip_port_components] set " + table_name + "_ip = '" + my_ip + "'")
         self.turn_on_components_ip_port_flags()
 
@@ -210,6 +211,22 @@ class Database:
         if not result:
             return None
         return result[0]
+
+    def get_images_txt_from_storage(self):
+        blob_client = BlobClient.from_connection_string(conn_str=self._CONNECTION_STRING, container_name=self.
+                                                        _CONTAINER, blob_name=self._IMAGES_FILE_NAME)
+        blob_stream = blob_client.download_blob()
+
+        return blob_stream.readall()
+
+    def get_camera_config_flag(self):
+        result = self.select_query_of_one_row("select Handle from [dbo].[Camera_config]")
+        if not result:
+            return None
+        return result[0]
+
+    def set_camera_config_flag_from_manager(self):
+        self.update_query("update [dbo].[Camera_config] set Handle = 1")
 
     def select_query_of_one_row(self, query):
         self.open_connection()
