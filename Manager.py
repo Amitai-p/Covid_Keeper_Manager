@@ -21,11 +21,13 @@ TIME_TO_WAIT_TO_ANALAYZER = 10
 global config
 
 
+# Return the url for this component.
 def get_url_by_name(config, name_comp):
     url = 'http://' + config[name_comp + '_ip'] + ':' + config[name_comp + '_port'] + '/'
     return url
 
 
+# Get the config and update the the url's of the component from the DB.
 def update_config_ip_port(config):
     dict = b.get_ip_port_config(NAME_COMPONENT)
     for conf in dict:
@@ -35,6 +37,7 @@ def update_config_ip_port(config):
     return config
 
 
+# Init the configuration for the program.
 def init_config():
     config = {}
     config = update_config_ip_port(config)
@@ -47,6 +50,7 @@ def init_config():
     return config
 
 
+# Get the defult configuration from file.
 def init_config_from_file():
     PATH_TO_CONFIG = 'config_json.txt'
     config = read_json(PATH_TO_CONFIG)
@@ -77,31 +81,36 @@ def read_json(path_to_file):
 config = init_config_from_file()
 
 
+# Update the config after changes from another components.
 def update_config():
-    print(config)
     dict = b.get_manager_config_dict()
-    print(dict)
     for conf in dict:
         config[conf] = dict[conf]
     print(config)
 
 
+# Check if we need to update the config.
 def check_config():
     print("flag config: ", b.get_manager_config_flag())
     if b.get_manager_config_flag() == '1':
         update_config()
 
 
+NAME_OF_FILE_FOR_CONVERT = 'testfile.jpg'
+
+
+# Convert the images to bytes for sending.
 def convert_bytes_to_image(data):
     data = bytes(data.decode('utf8')[:-1], 'utf-8')
     image_64_decode = base64.decodebytes(data)
-    image_result = open('testfile.jpg', 'wb')
+    image_result = open(NAME_OF_FILE_FOR_CONVERT, 'wb')
     image_result.write(image_64_decode)
     image_result.close()
-    image = cv2.imread('testfile.jpg')
+    image = cv2.imread(NAME_OF_FILE_FOR_CONVERT)
     return image
 
 
+# Ask from the cameras to send the images.
 def get_list_images_for_sending():
     headers = {'authentication': config['PASSWORD_EMAIL']}
     response = requests.get(config["URL_CAMERAS"], headers=headers)
@@ -110,13 +119,18 @@ def get_list_images_for_sending():
     return result
 
 
+PATH_TO_SECRET_KEY = "secret.key"
+
+
+# Load the secret key to decode the images.
 def load_key():
     """
     Loads the key named `secret.key` from the current directory.
     """
-    return open("secret.key", "rb").read()
+    return open(PATH_TO_SECRET_KEY, "rb").read()
 
 
+# Decode the images with the secret key.
 def decrypt_images(images):
     from cryptography.fernet import Fernet
     key = load_key()
@@ -124,6 +138,7 @@ def decrypt_images(images):
     return f.decrypt(images)
 
 
+# Get the images and send them to the analayzer.
 def post_images_to_analayzer(images):
     images = decrypt_images(images)
     print(config["URL_ANALAYZER"])
@@ -154,6 +169,7 @@ def delete_image(path_to_image):
 from datetime import *
 
 
+# Check the difference between the time_last to time now.
 def compare_times(time_last):
     time_now = datetime.now()
     diff_time = time_now - time_last
@@ -161,18 +177,20 @@ def compare_times(time_last):
     return diff_seconds
 
 
+# Check the last time that this worker got mail from Covid Keeper and decide if he have to get more mail now.
 def check_if_got_mail(id_worker):
     time_last = b.get_max_time_of_event_by_id_worker(id_worker)
     if not time_last:
         return True
     diff_seconds = compare_times(time_last)
     print("diff seconds: ", diff_seconds)
-    MINUTES_TO_SECONDES = 0.25
+    MINUTES_TO_SECONDES = 60
     if (diff_seconds > config["Minutes_between_mails"] * MINUTES_TO_SECONDES):
         return True
     return False
 
 
+# Get address of mail, path to iamge and name of worker and send him mail that he have to put a mask.
 def send_mail(mail_address, path_to_image, name):
     server = smtplib.SMTP('smtp.gmail.com', 587)
     # start TLS for security
@@ -210,6 +228,7 @@ def send_mail(mail_address, path_to_image, name):
     print("sent")
 
 
+# Convert the data from the post to dictionary.
 def get_dict_images(response):
     result = response
     data = json.loads(result)
@@ -220,6 +239,8 @@ def get_dict_images(response):
     return dict_images
 
 
+# Get dictionary of id's workers without mask and images of this events, and send them mails and save this events in
+# the database.
 def send_images_and_workers(dict_id_workers_without_mask):
     # connection get mails.
     for id in dict_id_workers_without_mask:
@@ -232,17 +253,21 @@ def send_images_and_workers(dict_id_workers_without_mask):
             send_mail(email, path_to_image, name)
         except:
             print('Can\'t send mail')
-        # update got mail.
+        # update that get mail.
         b.insert_event(id)
         delete_image(path_to_image)
     global dict_workers_without_mask
     dict_workers_without_mask = {}
 
 
+NAME_OF_IMAGE = 'img'
+
+
+# Prepare the data for sending to the analayzer with encode.
 def data_to_send(list_images):
     data = {}
     for i in range(len(list_images)):
-        key = 'img' + str(i)
+        key = NAME_OF_IMAGE + str(i)
         data[key] = base64.encodebytes(list_images[i]).decode('utf-8')
     result = json.dumps(data)
     return result
@@ -256,6 +281,7 @@ from flask import (
 app = Flask(__name__, template_folder="templates")
 
 
+# Wait for post from the analayzer and get the dictionary workers without mask.
 @app.route('/', methods=['POST'])
 def result():
     print("in result")
@@ -273,16 +299,23 @@ def result():
     return "OK"
 
 
+IP_LOCAL_HOST = '127.0.0.1'
+STRING_OF_NAME_PORT_DB = '_port'
+
+
+# Open the listening to the analayzer.
 def start_listen_to_analayzer():
     from waitress import serve
-    serve(app, host='127.0.0.1', port=int(config[NAME_COMPONENT + '_port']))
+    serve(app, host=IP_LOCAL_HOST, port=int(config[NAME_COMPONENT + STRING_OF_NAME_PORT_DB]))
 
 
+# Check if there is change at the config of the ips and ports.
 def check_config_ip_port():
     if b.get_flag_ip_port_by_table_name(NAME_COMPONENT) == '1':
         update_config_ip_port(config)
 
 
+# MAke one iterate for manage the flow of the program.
 def try_manager_iterate():
     # get list of images.
     try:
@@ -315,6 +348,7 @@ from flask import request
 import json, os
 
 
+# Check if we can connect to the DB.
 def try_connect_to_db():
     # b = Database()
     print("try connect")
@@ -326,7 +360,3 @@ def try_connect_to_db():
     result = b.start_or_close_threads()
     print(result)
     a = 1
-
-
-def run_manager_with_flag():
-    print(b)
