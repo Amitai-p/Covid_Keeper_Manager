@@ -329,6 +329,7 @@ def try_manager_iterate():
         print('length images: ', len(images))
     except:
         print("The cameras have to start")
+        return
     global dict_workers_without_mask
     global new_dictionary
     dict_workers_without_mask = None
