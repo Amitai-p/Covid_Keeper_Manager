@@ -18,6 +18,9 @@ b.set_port_by_table_name(NAME_COMPONENT, PORT_COMPONENT)
 
 dict_workers_without_mask = {}
 TIME_TO_WAIT_TO_ANALAYZER = 10
+IP_LOCAL_HOST = '127.0.0.1'
+STRING_OF_NAME_PORT_DB = '_port'
+NAME_OF_IMAGE = 'img'
 global config
 
 
@@ -260,9 +263,6 @@ def send_images_and_workers(dict_id_workers_without_mask):
     dict_workers_without_mask = {}
 
 
-NAME_OF_IMAGE = 'img'
-
-
 # Prepare the data for sending to the analayzer with encode.
 def data_to_send(list_images):
     data = {}
@@ -299,10 +299,6 @@ def result():
     return "OK"
 
 
-IP_LOCAL_HOST = '127.0.0.1'
-STRING_OF_NAME_PORT_DB = '_port'
-
-
 # Open the listening to the analayzer.
 def start_listen_to_analayzer():
     from waitress import serve
@@ -313,6 +309,10 @@ def start_listen_to_analayzer():
 def check_config_ip_port():
     if b.get_flag_ip_port_by_table_name(NAME_COMPONENT) == '1':
         update_config_ip_port(config)
+
+
+from flask import request
+import json, os
 
 
 # Make one iterate for manage the flow of the program.
@@ -343,21 +343,3 @@ def try_manager_iterate():
             print("sending")
             send_images_and_workers(dict_workers_without_mask)
     new_dictionary = False
-
-
-from flask import request
-import json, os
-
-
-# Check if we can connect to the DB.
-def try_connect_to_db():
-    # b = Database()
-    print("try connect")
-    b.open_connection()
-    print("open_connection")
-    b.open_cursor()
-    print("open cursur")
-    # print(b.get_workers_to_images_dict())
-    result = b.start_or_close_threads()
-    print(result)
-    a = 1
