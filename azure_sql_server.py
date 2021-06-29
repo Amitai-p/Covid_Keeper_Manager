@@ -52,16 +52,6 @@ class Database:
     def close_cursor(self):
         self.crsr.close()
 
-    # def get_image_worker(self, id_worker):
-    #     self.open_connection()
-    #     self.open_cursor()
-    #     select_sql = "SELECT Image From [dbo].[Workers] Where Id=" + id_worker
-    #     # image = self.convert_image_to_varbinary('Faces/Aberdam.jpg')
-    #     self.crsr.execute(select_sql)
-    #     data = self.crsr.fetchone()[0]
-    #     data = self.convert_bytes_to_image(data)
-    #     self.crsr.commit()
-    #     self.close_cursor()
 
     def start_or_close_threads(self):
         result = self.select_query_of_one_row("select Handle from [dbo].[Starter]")
@@ -132,15 +122,6 @@ class Database:
         self.insert_query_of_one_row(query=insert_sql, values_list=values_list)
 
     def get_events_order_with_max_time(self):
-        # self.open_connection()
-        # self.open_cursor()
-        # self.crsr.execute(select_sql)
-        # # data = self.crsr.fetchone()
-        # events_order_by_max_time = []
-        # for details in self.crsr:
-        #     events_order_by_max_time.append(details)
-        # self.close_cursor()
-        # self.crsr.commit()
         select_sql = "select id_worker, Max(Time_of_event) from [dbo].[History_events] " \
                      "group by id_worker order by Max(Time_of_event) desc;"
         result = self.select_query_of_many_rows(select_sql)
@@ -191,7 +172,7 @@ class Database:
         return config_dict
 
     def set_ip_by_table_name(self, table_name):
-        import socket
+        # import socket
         # my_ip = socket.gethostbyname(socket.gethostname())
         my_ip = '127.0.0.1'
         self.update_query("update [dbo].[Ip_port_components] set " + table_name + "_ip = '" + my_ip + "'")

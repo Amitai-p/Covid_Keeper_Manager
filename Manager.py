@@ -315,7 +315,7 @@ def check_config_ip_port():
         update_config_ip_port(config)
 
 
-# MAke one iterate for manage the flow of the program.
+# Make one iterate for manage the flow of the program.
 def try_manager_iterate():
     # get list of images.
     try:
