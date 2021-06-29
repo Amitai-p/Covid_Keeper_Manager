@@ -108,7 +108,7 @@ class Database:
         return workers_to_images_dict
 
     def get_fullname_and_email_by_id(self, id_worker):
-        select_sql = "SELECT FullName, Email_address From [dbo].[Workers] Where Id=" + id_worker
+        select_sql = "SELECT FullName, Email_address From [dbo].[Workers] Where Id='" + str(id_worker) + "'"
         result = self.select_query_of_one_row(select_sql)
         fullname = result[0]
         email = result[1]
