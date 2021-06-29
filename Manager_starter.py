@@ -25,7 +25,10 @@ def main():
             import time
             time.sleep(Manager.config["TIME_TO_SLEEP"])
             start_new_round = False
-        Manager.try_manager_iterate()
+        try:
+            Manager.try_manager_iterate()
+        except:
+            print('Manager continued')
         import time
         time.sleep(1)
 
