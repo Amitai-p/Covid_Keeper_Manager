@@ -182,6 +182,7 @@ def compare_times(time_last):
 
 # Check the last time that this worker got mail from Covid Keeper and decide if he have to get more mail now.
 def check_if_got_mail(id_worker):
+    print('1: ', type(id_worker))
     time_last = b.get_max_time_of_event_by_id_worker(id_worker)
     if not time_last:
         return True
@@ -247,6 +248,7 @@ def get_dict_images(response):
 def send_images_and_workers(dict_id_workers_without_mask):
     # connection get mails.
     for id in dict_id_workers_without_mask:
+        print('2: ', type(id))
         if not check_if_got_mail(id):
             print("got mail just now")
             continue

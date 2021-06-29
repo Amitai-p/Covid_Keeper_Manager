@@ -19,6 +19,7 @@ class Database:
                          'EndpointSuffix=core.windows.net'
     _CONTAINER = 'pictures'
     _IMAGES_FILE_NAME = 'list_images.txt'
+
     def open_connection(self):
         if not Database.is_connection:
             driver = '{ODBC Driver 17 for SQL Server}'
@@ -51,7 +52,6 @@ class Database:
 
     def close_cursor(self):
         self.crsr.close()
-
 
     def start_or_close_threads(self):
         result = self.select_query_of_one_row("select Handle from [dbo].[Starter]")
@@ -132,7 +132,7 @@ class Database:
 
     def get_max_time_of_event_by_id_worker(self, id_worker):
         result = self.select_query_of_one_row("select Max(Time_of_event) "
-                                              "from [dbo].[History_events] where Id_worker=" + id_worker)
+                                              "from [dbo].[History_events] where Id_worker='" + str(id_worker) + "'")
         if not result:
             return None
         return result[0]
