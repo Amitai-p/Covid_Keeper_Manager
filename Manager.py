@@ -48,7 +48,7 @@ def init_config():
     config["URL_CAMERAS"] = get_url_by_name(config, 'Camera')
     config["URL_ANALAYZER"] = get_url_by_name(config, 'Analayzer')
     config["USER_NAME_EMAIL"] = 'keepyourhealthmask'
-    config["PASSWORD_EMAIL"] = 'Amitai5925'
+    config["PASSWORD_EMAIL"] = '****'
     config["TIME_TO_SLEEP"] = 5
     return config
 
